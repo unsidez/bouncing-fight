@@ -1,12 +1,20 @@
+const socket = io();
+
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const _gravity = 0.1;
 
+const _playerList = {};
+
 class Player {
-  constructor() {
-    this.x = 150;
-    this.y = 400 / 2;
+  constructor(id, x, y) {
+    /*this.x = 150;
+    this.y = 400 / 2;*/
+    this.id = id;
+    this.x = x;
+    this.y = y;
+
     this.velocity = 0;
     this.lift = -5;
 
@@ -42,7 +50,11 @@ class Player {
 
   update() {
     this.velocity += _gravity;
-    //this.y += this.velocity;
+    this.y += this.velocity;
+
+    if (this.y > 300) {
+      this.velocity -= 1;
+    }
 
     this.render();
   }
@@ -80,7 +92,9 @@ class Player {
   }
 
   jump() {
-    this.velocity += this.lift;
+    if (socket.id == this.id) {
+      this.velocity += this.lift;
+    }
   }
 
   fire() {
@@ -88,14 +102,12 @@ class Player {
   }
 }
 
-const player = new Player();
-
-
-
-
 function gameLoop() {
   ctx.clearRect(0, 0, 400, 400);
-  player.update();
+
+  Object.keys(_playerList).map((player) => {
+    _playerList[player].update();
+  });
 
   ctx.rect(30, 350, 150, 10);
   ctx.fill();
@@ -104,3 +116,34 @@ function gameLoop() {
 }
 
 gameLoop();
+
+const objectToMap = obj => {
+  const map = new Map();
+
+  for (const k of Object.keys(obj)) {
+      map.set(k, obj[k]);
+  }
+  return map;
+};
+
+socket.on('connect', () => {
+  socket.emit('player_joined', {
+      name: Math.round(Math.random() * 100),
+  });
+
+  socket.on('player_joined', () => {
+    socket.emit('get_players_position');
+  })
+
+  socket.on('players_position', (data) => {
+    const map = objectToMap(data);
+
+    map.forEach((data) => {
+      _playerList[data.id] = new Player(data.id, data.position.x, data.position.y);
+    });
+
+  });
+
+
+  socket.emit('players_position', {});
+});
