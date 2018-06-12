@@ -95,6 +95,7 @@ class Player {
     jump() {
         if (this.control) {
             this.velocity += this.lift;
+            socket.emit('get_players_position');
         }
     }
 
@@ -131,31 +132,34 @@ socket.on('connect', () => {
     socket.emit('player_joined', {
         name: Math.round(Math.random() * 100)
     });
-
-    socket.on('player_joined', data => {
-        _playerList[data.id] = new Player(
-            data.id,
-            data.position.x,
-            data.position.y,
-            true
-        );
-        socket.emit('get_players_position');
-    });
-
-    socket.on('players_position', data => {
-        const map = objectToMap(data);
-
-        map.forEach(player => {
-            if (player.id === socket.it) {
-                return;
-            }
-            _playerList[player.id] = new Player(
-                player.id,
-                player.position.x,
-                player.position.y
-            );
-        });
-    });
-
     //socket.emit('players_position', {});
+});
+
+socket.on('player_joined', data => {
+  _playerList[data.id] = new Player(
+      data.id,
+      data.position.x,
+      data.position.y,
+      true
+  );
+  socket.emit('get_players_position');
+});
+
+socket.on('players_position', data => {
+  const map = objectToMap(data);
+
+  map.forEach(player => {
+      if (player.id === socket.id) {
+          return;
+      }
+      _playerList[player.id] = new Player(
+          player.id,
+          player.position.x,
+          player.position.y
+      );
+  });
+});
+
+socket.on('player_left', data => {
+  delete _playerList[data.id];
 });

@@ -17,16 +17,17 @@ const mapToObject = map => {
 };
 
 io.on('connection', socket => {
+  console.log(socket.id)
     // { name, position }
     socket.on('player_joined', data => {
-      console.log('player connected')
         data.position = {
           x: Math.round(Math.random() * 200),
           y: Math.round(Math.random() * 100),
         };
 
         players.set(socket.id, data);
-        io.emit('player_joined', { id: socket.id, ...data });
+        socket.emit('player_joined', { id: socket.id, ...data });
+
     });
 
     socket.on('get_players_position', () => {
@@ -45,6 +46,7 @@ io.on('connection', socket => {
     socket.on('disconnect', () => {
         const data = players.get(socket.id);
         players.delete(socket.id);
+
         io.emit('player_left', { id: socket.id, ...data });
     });
 });
