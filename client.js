@@ -1,5 +1,8 @@
+/* Client script to test realtime interactions */
 const io = require('socket.io-client');
 const socket = io('http://localhost:3000');
+
+const _playerList = {};
 
 const objectToMap = obj => {
     const map = new Map();
@@ -11,20 +14,31 @@ const objectToMap = obj => {
 };
 
 socket.on('connect', () => {
-    console.log('connected');
     socket.emit('player_joined', {
-        name: 'John Doe',
-        position: { x: 2, y: 4 }
+        name: Math.round(Math.random() * 100)
     });
-    socket.emit('players_position', {});
+    //socket.emit('players_position', {});
 });
 
 socket.on('player_joined', data => {
-    console.log(data);
+    _playerList[data.id] = { ...data, control: true };
+    socket.emit('get_players_position');
+    console.log('player_joined', data);
 });
 
-socket.on('players_position', players => {
-    console.log(objectToMap(players));
+socket.on('players_position', data => {
+    const map = objectToMap(data);
+    console.log('map -> ', map);
+
+    map.forEach((player, id) => {
+        if (id === socket.id) {
+            return;
+        }
+        _playerList[id] = { ...player };
+    });
+    console.log('player_list', Object.keys(_playerList));
 });
 
-socket.on('disconnect', () => {});
+socket.on('player_left', data => {
+    delete _playerList[data.id];
+});
