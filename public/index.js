@@ -136,30 +136,30 @@ socket.on('connect', () => {
 });
 
 socket.on('player_joined', data => {
-  _playerList[data.id] = new Player(
-      data.id,
-      data.position.x,
-      data.position.y,
-      true
-  );
-  socket.emit('get_players_position');
+    _playerList[data.id] = new Player(
+        data.id,
+        data.position.x,
+        data.position.y,
+        true
+    );
+    socket.emit('get_players_position');
 });
 
 socket.on('players_position', data => {
-  const map = objectToMap(data);
+    const map = objectToMap(data);
 
-  map.forEach(player => {
-      if (player.id === socket.id) {
-          return;
-      }
-      _playerList[player.id] = new Player(
-          player.id,
-          player.position.x,
-          player.position.y
-      );
-  });
+    map.forEach((player, id) => {
+        if (id === socket.id) {
+            return;
+        }
+        _playerList[id] = new Player(
+            player.id,
+            player.position.x,
+            player.position.y
+        );
+    });
 });
 
 socket.on('player_left', data => {
-  delete _playerList[data.id];
+    delete _playerList[data.id];
 });
