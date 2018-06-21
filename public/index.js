@@ -9,8 +9,6 @@ const _playerList = {};
 
 class Player {
     constructor(id, x, y, control = false) {
-        /*this.x = 150;
-    this.y = 400 / 2;*/
         this.id = id;
         this.x = x;
         this.y = y;
@@ -50,20 +48,22 @@ class Player {
     }
 
     update() {
-        /*this.velocity += _gravity;
+        this.velocity += _gravity;
         this.y += this.velocity;
 
         if (this.y > 300) {
             this.velocity -= 1;
-        }*/
+        }
 
-        socket.emit('update_player_position', { x: this.x, y: this.y });
+        if (this.control) {
+            socket.emit('update_player_position', { x: this.x, y: this.y });
+        }
 
         this.render();
     }
 
     renderText() {
-      ctx.fillText(this.id, this.x - 50, this.y - 20);
+        ctx.fillText(this.id, this.x - 50, this.y - 20);
     }
 
     render() {
@@ -103,8 +103,6 @@ class Player {
     jump() {
         if (this.control) {
             this.velocity += this.lift;
-            socket.emit('update_player_position', { x: this.x, y: this.y });
-            socket.emit('get_players_position');
         }
     }
 
@@ -113,8 +111,6 @@ class Player {
         ctx.beginPath();
         ctx.arc(this.px + 30, this.py + 30, 5, 0, 2 * Math.PI);
         ctx.fill();
-
-
     }
 }
 
@@ -144,9 +140,8 @@ const objectToMap = obj => {
 
 socket.on('connect', () => {
     socket.emit('player_joined', {
-        name: Math.round(Math.random() * 100)
+        name: Math.round(Math.random() * 100),
     });
-    //socket.emit('players_position', {});
 });
 
 socket.on('player_joined', data => {
@@ -154,7 +149,7 @@ socket.on('player_joined', data => {
         data.id,
         data.position.x,
         data.position.y,
-        true
+        true,
     );
     socket.emit('get_players_position');
 });
@@ -169,9 +164,16 @@ socket.on('players_position', data => {
         _playerList[id] = new Player(
             player.id,
             player.position.x,
-            player.position.y
+            player.position.y,
         );
     });
+});
+
+socket.on('player_position', data => {
+    const player = _playerList[data.id];
+    if (player) {
+        player.updatePosition(data.position);
+    }
 });
 
 socket.on('player_left', data => {
