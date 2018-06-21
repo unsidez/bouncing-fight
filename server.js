@@ -37,7 +37,7 @@ io.on('connection', socket => {
 
         data.position = position;
 
-        io.emit('players_position', mapToObject(players));
+        io.emit('player_position', { id: socket.id, ...data });
     });
 
     socket.on('disconnect', () => {
