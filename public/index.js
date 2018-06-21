@@ -24,7 +24,7 @@ class Player {
         this.targetX = 0;
         this.targetY = 0;
 
-        this.firedBullets = 0;
+        this.bullets = [];
 
         this.enableBindings();
     }
@@ -50,18 +50,26 @@ class Player {
     }
 
     update() {
-        this.velocity += _gravity;
+        /*this.velocity += _gravity;
         this.y += this.velocity;
 
         if (this.y > 300) {
             this.velocity -= 1;
-        }
+        }*/
+
+        socket.emit('update_player_position', { x: this.x, y: this.y });
 
         this.render();
     }
 
+    renderText() {
+      ctx.fillText(this.id, this.x - 50, this.y - 20);
+    }
+
     render() {
         ctx.beginPath();
+
+        this.renderText();
         ctx.fillStyle = '#ffffff';
         ctx.arc(this.x, this.y, 10, 0, 2 * Math.PI);
         ctx.moveTo(150, 150);
@@ -95,12 +103,18 @@ class Player {
     jump() {
         if (this.control) {
             this.velocity += this.lift;
+            socket.emit('update_player_position', { x: this.x, y: this.y });
             socket.emit('get_players_position');
         }
     }
 
     fire() {
-        this.firedBullets += 1;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(this.px + 30, this.py + 30, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+
     }
 }
 
